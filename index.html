@@ -202,9 +202,9 @@ function computeAll(){
   // ---- Top plays (cross-market) ----
   var top=[];
   var _inR=function(o){return o!=null&&o>=-250&&o<=1000;};
-  hits.filter(function(_h){return _inR(_h.o1_odds);}).slice(0,12).forEach(function(x){top.push({mk:'Hits / TB',nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'xwOBA '+f3(x.xw)+' &middot; vs '+(x.sp||'TBD'),est:'~'+Math.round((x.p1||0)*100)+'% 1+ base',edge:x.o1_edge});});
-  hr.filter(function(_h){return _inR(_h.odds);}).slice(0,12).forEach(function(x){top.push({mk:'Home Run',nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'Brl/PA '+f1(x.bpa)+'% &middot; '+f0(x.pf)+' PF',est:'~'+Math.round(x.est*100)+'% HR',edge:x.edge});});
-  k.filter(function(_p){return _inR(_p.odds);}).slice(0,12).forEach(function(x){top.push({mk:'Pitcher K',nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'K% '+f1(x.kp)+' &middot; Rec30 '+f0(x.rec),est:'proj '+f1(x.projK)+' K',edge:x.edge});});
+  hits.filter(function(_h){return _inR(_h.o1_odds);}).slice(0,12).forEach(function(x){top.push({mk:'Hits / TB',nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'xwOBA '+f3(x.xw)+' &middot; vs '+(x.sp||'TBD'),est:'~'+Math.round((x.p1||0)*100)+'% 1+ base',edge:x.o1_edge,side:'1+ TB',odds:x.o1_odds});});
+  hr.filter(function(_h){return _inR(_h.odds);}).slice(0,12).forEach(function(x){top.push({mk:'Home Run',nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'Brl/PA '+f1(x.bpa)+'% &middot; '+f0(x.pf)+' PF',est:'~'+Math.round(x.est*100)+'% HR',edge:x.edge,side:'1+ HR',odds:x.odds});});
+  k.filter(function(_p){return _inR(_p.odds);}).slice(0,12).forEach(function(x){top.push({mk:'Pitcher K',nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'K% '+f1(x.kp)+' &middot; Rec30 '+f0(x.rec),est:'proj '+f1(x.projK)+' K',edge:x.edge,side:'Over '+x.line+' K',odds:x.odds});});
   top.sort(function(a,b){return b.lean-a.lean;}); top=top.slice(0,9);
   var nIneH=H.filter(inel).length; var nIneP=PL.filter(function(p){return num(p.k)!=null&&inel(p);}).length;
   var nLowH=H.filter(function(h){return !inel(h)&&!reg(h);}).length;
@@ -264,6 +264,7 @@ function renderTop(){
   w.innerHTML=items.map(function(x){
     return '<div class="gcard"><div class="mk">'+x.mk+'</div><div class="pl">'+x.nm+' <span class="tm">'+x.tm+'</span></div>'+
       '<div class="dt2">'+x.opp+' &middot; '+x.det+'</div>'+
+      '<div class="ln" style="margin:3px 0 0">'+(x.side||'')+' <b style="color:#0a3d25">'+(x.odds!=null?fmtOdds(x.odds):'&mdash;')+'</b></div>'+
       '<div class="ln">Lean '+leanBadge(x.lean)+' &nbsp; <b>'+x.est+'</b>'+(x.edge!=null?(' &nbsp; <b style="color:'+(x.edge>=0?'#0d7d4d':'#b3402f')+'">Edge '+(x.edge>0?'+':'')+x.edge.toFixed(1)+'%</b>'):'')+'</div></div>';
   }).join('') || '<div class="muted">No plays for this date.</div>';
 }

@@ -157,6 +157,7 @@ function computeAll(){
   function reg(h){return num(h.pa)!=null && h.pa>=THR;}
   // ---- Hits / TB ----
   var pXW=mkPct(H.map(function(h){return num(h.xwoba);}));
+  var pSLG=mkPct(H.map(function(h){return num(h.slg);}));
   var pPF=mkPct(H.map(function(h){return num(h.pf);}));
   var pL7=mkPct(H.map(function(h){return num(h.spl7);}));
   var pPlat=mkPct(H.map(function(h){return num(h.spplat);}));
@@ -166,7 +167,7 @@ function computeAll(){
   H.forEach(function(h){ if(inel(h))return; if(!reg(h))return; if(num(h.xwoba)==null)return;
     var lean=blend([[pXW(num(h.xwoba)),.42],[pOpp(oppWeak(h)),.26],[pPF(num(h.pf)),.12],[pL7(num(h.spl7)),.12],[pPlat(num(h.spplat)),.08]]);
     if(lean==null)return;
-    hits.push({nm:h.name,key:normName(h.name),tm:h.team,opp:(h.home?'vs ':'@ ')+h.opp,sp:h.opp_sp||'',lean:lean*100,est:0.50+0.30*lean,xw:num(h.xwoba),slg:num(h.slg),l7:num(h.spl7),pf:num(h.pf),fa:h.avail?1:0});
+    hits.push({nm:h.name,key:normName(h.name),tm:h.team,opp:(h.home?'vs ':'@ ')+h.opp,sp:h.opp_sp||'',lean:lean*100,est:0.50+0.30*lean,xw:num(h.xwoba),slg:num(h.slg),l7:num(h.spl7),pf:num(h.pf),bpa:num(h.brlpa),mev:num(h.mev),ow:oppWeak(h),fa:h.avail?1:0});
   });
   hits.sort(function(a,b){return b.lean-a.lean;});
   // ---- Home runs ----
@@ -204,13 +205,29 @@ function computeAll(){
   hits.forEach(function(r){ r.p1=r.est; if(r.p1!=null){var pc=Math.max(0.05,Math.min(0.97,r.p1)); var lam=-Math.log(1-pc)*Math.sqrt((r.slg!=null?r.slg:0.40)/0.40); r.p2=1-(1+lam)*Math.exp(-lam);} attachTB(r,OD&&OD.tb,r.p1,r.p2); });
   hr.forEach(function(r){attachBin(r,OD&&OD.hr,r.est);});
   k.forEach(function(r){attachK(r,OD&&OD.k);});
+  hits.forEach(function(r){var ln=blend([[pSLG(r.slg),.30],[pBpa(r.bpa),.22],[pXW(r.xw),.18],[pMev(r.mev),.10],[pOpp(r.ow),.12],[pPF(r.pf),.08]]); r.tbLean=(ln==null?null:ln*100);});
   // ---- Top plays (cross-market) ----
-  var top=[];
   var _inR=function(o){return o!=null&&o>=-250&&o<=1000;};
-  hits.filter(function(_h){return _inR(_h.o1_odds);}).slice(0,12).forEach(function(x){top.push({mk:'Hits / TB',nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'xwOBA '+f3(x.xw)+' &middot; vs '+(x.sp||'TBD'),est:'~'+Math.round((x.p1||0)*100)+'% 1+ base',edge:x.o1_edge,side:'1+ H',odds:x.o1_odds});});
-  hr.filter(function(_h){return _inR(_h.odds);}).slice(0,12).forEach(function(x){top.push({mk:'Home Run',nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'Brl/PA '+f1(x.bpa)+'% &middot; '+f0(x.pf)+' PF',est:'~'+Math.round(x.est*100)+'% HR',edge:x.edge,side:'1+ HR',odds:x.odds});});
-  k.filter(function(_p){return _inR(_p.odds);}).slice(0,12).forEach(function(x){top.push({mk:'Pitcher K',nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'K% '+f1(x.kp)+' &middot; Rec30 '+f0(x.rec),est:'proj '+f1(x.projK)+' K',edge:x.edge,side:'Over '+x.line+' K',odds:x.odds});});
-  top.sort(function(a,b){return b.lean-a.lean;}); top=top.slice(0,9);
+  function _card(x,mk){
+    if(mk==='Hits / TB')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'xwOBA '+f3(x.xw)+' &middot; vs '+(x.sp||'TBD'),est:'~'+Math.round((x.p1||0)*100)+'% 1+ base',edge:x.o1_edge,side:'1+ H',odds:x.o1_odds};
+    if(mk==='Total Bases')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.tbLean,det:'SLG '+f3(x.slg)+' &middot; Brl/PA '+f1(x.bpa)+'%',est:'~'+Math.round((x.p2||0)*100)+'% 2+ TB',edge:x.o2_edge,side:'2+ TB',odds:x.o2_odds};
+    if(mk==='Home Run')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'Brl/PA '+f1(x.bpa)+'% &middot; '+f0(x.pf)+' PF',est:'~'+Math.round(x.est*100)+'% HR',edge:x.edge,side:'1+ HR',odds:x.odds};
+    return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'K% '+f1(x.kp)+' &middot; Rec30 '+f0(x.rec),est:'proj '+f1(x.projK)+' K',edge:x.edge,side:'Over '+x.line+' K',odds:x.odds};
+  }
+  var _lists=[
+    hits.filter(function(_h){return _inR(_h.o1_odds);}).slice(0,12).map(function(x){return _card(x,'Hits / TB');}),
+    hits.filter(function(_h){return _h.o2_odds!=null&&_inR(_h.o2_odds)&&_h.tbLean!=null;}).sort(function(a,b){return b.tbLean-a.tbLean;}).slice(0,12).map(function(x){return _card(x,'Total Bases');}),
+    hr.filter(function(_h){return _inR(_h.odds);}).slice(0,12).map(function(x){return _card(x,'Home Run');}),
+    k.filter(function(_p){return _inR(_p.odds);}).slice(0,12).map(function(x){return _card(x,'Pitcher K');})
+  ];
+  var top=[], _i=0;
+  while(top.length<9){
+    var _round=[]; _lists.forEach(function(L){if(L[_i])_round.push(L[_i]);});
+    if(!_round.length)break;
+    _round.sort(function(a,b){return b.lean-a.lean;});
+    for(var _j=0;_j<_round.length&&top.length<9;_j++)top.push(_round[_j]);
+    _i++;
+  }
   var nIneH=H.filter(inel).length; var nIneP=PL.filter(function(p){return num(p.k)!=null&&inel(p);}).length;
   var nLowH=H.filter(function(h){return !inel(h)&&!reg(h);}).length;
   return {hits:hits,hr:hr,k:k,top:top,nIneH:nIneH,nIneP:nIneP,nLowH:nLowH,thr:THR};
@@ -303,7 +320,7 @@ function renderResults(){
   function card(t,st){return '<div class="gcard" style="border-left-color:'+uc(st.u)+'"><div class="mk">'+t+'</div><div class="pl" style="color:'+uc(st.u)+'">'+(st.u>=0?'+':'')+st.u.toFixed(2)+'u</div><div class="dt2">'+st.w+'W&ndash;'+st.l+'L &middot; ROI '+(st.roi>=0?'+':'')+st.roi.toFixed(1)+'%</div></div>';}
   var html='<div class="gnote">Paper backtest &mdash; <b>1 unit flat</b> on every Top Play (the model&#39;s side) at the recorded odds, graded from final MLB box scores. Days before live tracking use closing lines. For evaluation only; not financial advice.</div>';
   html+='<div class="gcards">'+card('All Top Plays',stats(graded))+card('Positive-Edge Only',stats(graded.filter(function(p){return p.edge!=null&&p.edge>0;})));
-  ['Hits / TB','Home Run','Pitcher K'].forEach(function(mk){html+=card(mk,stats(graded.filter(function(p){return p.market===mk;})));});
+  ['Hits / TB','Total Bases','Home Run','Pitcher K'].forEach(function(mk){html+=card(mk,stats(graded.filter(function(p){return p.market===mk;})));});
   html+='</div>';
   var seq=graded.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
   var cum=0,pts=seq.map(function(p){cum+=(p.units||0);return cum;});

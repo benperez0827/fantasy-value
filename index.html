@@ -150,6 +150,9 @@ var G={market:'top',q:'',sort:{key:'lean',asc:false},hits:[],hr:[],k:[],top:[]};
 function computeAll(){
   var H=(D.hitters||[]); var PL=(D.pitchers||[]);
   var PM={}; PL.forEach(function(p){if(p.name)PM[p.name]=p;});
+  var LU=(typeof LINEUPS_BY_DATE!=='undefined'&&LINEUPS_BY_DATE&&LINEUPS_BY_DATE[D.date])?LINEUPS_BY_DATE[D.date]:null;
+  var _starters={}; if(LU&&LU.starters)LU.starters.forEach(function(n){_starters[n]=1;});
+  function lineupOK(h){ if(!LU||!LU.teams)return true; if(LU.teams.indexOf(h.team)<0)return true; return _starters[normName(h.name)]===1; }
   // ---- playing-time qualifier: drop part-time bats so they can't be recommended ----
   var _pa=H.map(function(h){return num(h.pa);}).filter(function(v){return v!=null&&v>0;}).sort(function(a,b){return a-b;});
   var _p90=_pa.length?_pa[Math.min(_pa.length-1,Math.floor(0.90*_pa.length))]:0;
@@ -164,7 +167,7 @@ function computeAll(){
   function oppWeak(h){var sp=PM[h.opp_sp];return (sp&&sp.pq!=null)?(100-sp.pq):null;}
   var pOpp=mkPct(H.map(oppWeak));
   var hits=[];
-  H.forEach(function(h){ if(inel(h))return; if(!reg(h))return; if(num(h.xwoba)==null)return;
+  H.forEach(function(h){ if(inel(h))return; if(!reg(h))return; if(!lineupOK(h))return; if(num(h.xwoba)==null)return;
     var lean=blend([[pXW(num(h.xwoba)),.42],[pOpp(oppWeak(h)),.26],[pPF(num(h.pf)),.12],[pL7(num(h.spl7)),.12],[pPlat(num(h.spplat)),.08]]);
     if(lean==null)return;
     hits.push({nm:h.name,key:normName(h.name),tm:h.team,opp:(h.home?'vs ':'@ ')+h.opp,sp:h.opp_sp||'',lean:lean*100,est:0.50+0.30*lean,xw:num(h.xwoba),slg:num(h.slg),l7:num(h.spl7),pf:num(h.pf),bpa:num(h.brlpa),mev:num(h.mev),ow:oppWeak(h),fa:h.avail?1:0});
@@ -177,7 +180,7 @@ function computeAll(){
   function oppBarrel(h){var sp=PM[h.opp_sp];return (sp&&sp.brl!=null)?num(sp.brl):null;}
   var pOppB=mkPct(H.map(oppBarrel));
   var hr=[];
-  H.forEach(function(h){ if(inel(h))return; if(!reg(h))return; if(num(h.brlpa)==null&&num(h.brl)==null)return;
+  H.forEach(function(h){ if(inel(h))return; if(!reg(h))return; if(!lineupOK(h))return; if(num(h.brlpa)==null&&num(h.brl)==null)return;
     var lean=blend([[pBpa(num(h.brlpa)),.34],[pBrl(num(h.brl)),.18],[pMev(num(h.mev)),.12],[pPF(num(h.pf)),.14],[pOppB(oppBarrel(h)),.22]]);
     if(lean==null)return;
     hr.push({nm:h.name,key:normName(h.name),tm:h.team,opp:(h.home?'vs ':'@ ')+h.opp,sp:h.opp_sp||'',lean:lean*100,est:0.04+0.18*lean,brl:num(h.brl),bpa:num(h.brlpa),mev:num(h.mev),pf:num(h.pf),fa:h.avail?1:0});

@@ -76,12 +76,12 @@ function a2p(o){o=+o;if(isNaN(o))return null;return o<0?(-o)/(-o+100):100/(o+100
 function devig(ov,un){var po=a2p(ov),pu=a2p(un);if(po==null)return null;if(pu==null)return po;var sm=po+pu;return sm>0?po/sm:po;}
 function fmtOdds(o){o=+o;return (o>0?'+':'')+o;}
 function poissonOver(lam,line){var kk=Math.floor(line),cdf=0,t=Math.exp(-lam);for(var i=0;i<=kk;i++){if(i>0)t*=lam/i;cdf+=t;}return 1-cdf;}
-function attachBin(r,mkt,modelP){if(!mkt)return;var m=mkt[r.key];if(!m||m.over==null)return;r.line=(m.line!=null?m.line:0.5);r.odds=m.over;var dv=(m.under!=null)?devig(m.over,m.under):a2p(m.over);if(dv!=null&&modelP!=null){r.edge=(modelP-dv)*100;r.mktp=dv;}}
-function attachK(r,mkt){if(!mkt)return;var m=mkt[r.key];if(!m||m.over==null||m.line==null)return;r.line=m.line;r.odds=m.over;if(r.projK!=null){var mp=poissonOver(r.projK,m.line);var dv=(m.under!=null)?devig(m.over,m.under):a2p(m.over);if(dv!=null){r.edge=(mp-dv)*100;r.mktp=dv;r.modelPOver=mp;}}}
+function attachBin(r,mkt,modelP){if(!mkt)return;var m=mkt[r.key];if(!m||m.over==null)return;r.line=(m.line!=null?m.line:0.5);r.odds=m.over;r.hr_book=m.book;var dv=(m.under!=null)?devig(m.over,m.under):a2p(m.over);if(dv!=null&&modelP!=null){r.edge=(modelP-dv)*100;r.mktp=dv;}}
+function attachK(r,mkt){if(!mkt)return;var m=mkt[r.key];if(!m||m.over==null||m.line==null)return;r.line=m.line;r.odds=m.over;r.k_book=m.book;if(r.projK!=null){var mp=poissonOver(r.projK,m.line);var dv=(m.under!=null)?devig(m.over,m.under):a2p(m.over);if(dv!=null){r.edge=(mp-dv)*100;r.mktp=dv;r.modelPOver=mp;}}}
 function edgeCell(e){return (e==null||isNaN(e))?PH:('<span style="color:'+(e>=0?'#0d7d4d':'#b3402f')+';font-weight:700">'+(e>0?'+':'')+e.toFixed(1)+'%</span>');}
-function attachTB(r,mkt,p1,p2){if(!mkt)return;var m=mkt[r.key];if(!m)return;if(m.b1&&m.b1.over!=null&&m.b1.under!=null&&a2p(m.b1.over)>=a2p(m.b1.under)){r.o1_odds=m.b1.over;var d1=devig(m.b1.over,m.b1.under);if(d1!=null&&p1!=null)r.o1_edge=(p1-d1)*100;}if(m.b2&&m.b2.over!=null){r.o2_odds=m.b2.over;var d2=(m.b2.under!=null)?devig(m.b2.over,m.b2.under):a2p(m.b2.over);if(d2!=null&&p2!=null)r.o2_edge=(p2-d2)*100;}}
+function attachTB(r,mkt,p1,p2){if(!mkt)return;var m=mkt[r.key];if(!m)return;if(m.b1&&m.b1.over!=null&&m.b1.under!=null&&a2p(m.b1.over)>=a2p(m.b1.under)){r.o1_odds=m.b1.over;r.o1_book=m.b1.book;var d1=devig(m.b1.over,m.b1.under);if(d1!=null&&p1!=null)r.o1_edge=(p1-d1)*100;}if(m.b2&&m.b2.over!=null){r.o2_odds=m.b2.over;r.o2_book=m.b2.book;var d2=(m.b2.under!=null)?devig(m.b2.over,m.b2.under):a2p(m.b2.over);if(d2!=null&&p2!=null)r.o2_edge=(p2-d2)*100;}}
 function ncdf(x){var t=1/(1+0.2316419*Math.abs(x));var d=0.3989422804014327*Math.exp(-x*x/2);var p=d*t*(0.31938153+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));return x>0?1-p:p;}
-function attachOuts(r,mkt){if(!mkt)return;var m=mkt[r.key];if(!m||m.over==null||m.line==null)return;r.outs_line=m.line;r.outs_odds=m.over;if(r.projOuts!=null){var mu=r.projOuts,sd=4.0;var mp=1-ncdf((m.line-mu)/sd);var dv=(m.under!=null)?devig(m.over,m.under):a2p(m.over);if(dv!=null){r.outs_edge=(mp-dv)*100;r.outs_mktp=dv;r.outs_p=mp;}}}
+function attachOuts(r,mkt){if(!mkt)return;var m=mkt[r.key];if(!m||m.over==null||m.line==null)return;r.outs_line=m.line;r.outs_odds=m.over;r.outs_book=m.book;if(r.projOuts!=null){var mu=r.projOuts,sd=4.0;var mp=1-ncdf((m.line-mu)/sd);var dv=(m.under!=null)?devig(m.over,m.under):a2p(m.over);if(dv!=null){r.outs_edge=(mp-dv)*100;r.outs_mktp=dv;r.outs_p=mp;}}}
 function attachER(r,mkt){if(!mkt)return;var m=mkt[r.key];if(!m||m.under==null||m.line==null)return;r.er_line=m.line;r.er_odds=m.under;if(r.xera!=null&&r.projIP!=null){var lam=(r.xera/9)*r.projIP;var pu=1-poissonOver(lam,m.line);var dv=(m.over!=null&&m.under!=null)?(1-devig(m.over,m.under)):a2p(m.under);if(dv!=null){r.er_edge=(pu-dv)*100;r.er_mktp=dv;r.er_p=pu;r.er_lam=lam;}}}
 
 // ---- styles ----
@@ -134,7 +134,7 @@ var gb=document.createElement('div'); gb.id='fvGambling'; if(!STANDALONE) gb.sty
 gb.innerHTML=
 '<h1 style="font-size:20px;margin:0 0 2px">Daily Baseball Gambling Model &mdash; <span id="gdt"></span></h1>'+
 '<p class="sub">Model-driven prop leans built from the same Statcast + matchup engine as the value model. Each spot is ranked 0&ndash;100 by the metrics that drive that prop. POC v1.</p>'+
-'<div class="gnote"><b>How to read this:</b> these are <b>model leans</b>, not odds-derived edges. The engine ranks each spot 0&ndash;100 by the inputs that move that prop (contact quality, matchup vs today&#39;s starter, park, recent form). The <b>Line / Odds / Edge</b> columns show prop lines via <b>SportsGameOdds</b> (FanDuel when available, otherwise market consensus) once an odds key is configured; <b>Edge</b> = model probability &minus; the de-vigged implied probability (positive = model sees value; strikeout edge uses a Poisson model around the posted line). Free-tier lines may be ~10 min delayed. The Hits/TB tab lists odds for <b>1+ hits</b> and <b>2+ total bases</b> &mdash; two different bets &mdash; with an edge beside each (model probabilities are rough estimates: 1+ hits uses the model&#39;s hit probability; 2+ total bases scales it by the batter&#39;s power (SLG)). The <b>Pitcher Props</b> tab covers three starter bets: strikeouts (Over, Poisson around the line), <b>outs recorded</b> (Over, from the model&#39;s projected innings) and <b>earned runs</b> (Under, from expected ERA over projected innings) &mdash; each with its own odds and edge. <b>Ineligible players</b> (IL, bereavement, paternity, or DTD) are excluded from all leans and Top Plays. <b>Limited-role bats</b> (low season plate appearances) are also held out so part-timers don&#39;t surface as plays. Model %/projections are rough estimates, not guarantees. For entertainment; please bet responsibly.</div>'+
+'<div class="gnote"><b>How to read this:</b> these are <b>model leans</b>, not odds-derived edges. The engine ranks each spot 0&ndash;100 by the inputs that move that prop (contact quality, matchup vs today&#39;s starter, park, recent form). The <b>Line / Odds / Edge</b> columns show prop lines via <b>SportsGameOdds</b> (FanDuel when available, otherwise market consensus) once an odds key is configured; <b>Edge</b> = model probability &minus; the de-vigged implied probability (positive = model sees value; strikeout edge uses a Poisson model around the posted line). Free-tier lines may be ~10 min delayed. The Hits/TB tab lists odds for <b>1+ hits</b> and <b>2+ total bases</b> &mdash; two different bets &mdash; with an edge beside each (model probabilities are rough estimates: 1+ hits uses the model&#39;s hit probability; 2+ total bases scales it by the batter&#39;s power (SLG)). The <b>Pitcher Props</b> tab covers three starter bets: strikeouts (Over, Poisson around the line), <b>outs recorded</b> (Over, from the model&#39;s projected innings) and <b>earned runs</b> (Under, from expected ERA over projected innings) &mdash; each with its own odds and edge. <b>Ineligible players</b> (IL, bereavement, paternity, or DTD) are excluded from all leans and Top Plays. <b>Limited-role bats</b> (low season plate appearances) are also held out so part-timers don&#39;t surface as plays. Model %/projections are rough estimates, not guarantees. <b>Top Plays</b> lists only FanDuel-posted markets with a model edge of 5%+ (the bettable value set); the <b>Results</b> tab tracks the full model including consensus-priced markets, for a complete performance picture. For entertainment; please bet responsibly.</div>'+
 '<div class="tabs" id="gtabs">'+
 '<div class="tab active" data-g="top" id="gtTop">Top Plays</div>'+
 '<div class="tab" data-g="hits" id="gtHits">Hits / TB Props</div>'+
@@ -233,16 +233,18 @@ function computeAll(){
   }
   // Rank by betting EDGE (value). Guardrail: pitcher props require durability (outsLean>=DURA)
   // so relievers/openers/short-leash starters (generic-workload projection inflates their edge) are excluded.
-  var DURA=50;
+  // TAB = the user's bettable set: FanDuel-listed prices only, edge >= MINEDGE (safety margin vs model error).
+  // (The Results log uses its own selection incl. consensus odds for the shareable backtest.)
+  var DURA=50, MINEDGE=5, FD='fanduel';
   var _cand=[];
   hits.forEach(function(x){
-    if(x.o1_edge!=null&&x.o1_edge>0&&_inR(x.o1_odds))_cand.push(_card(x,'Hits / TB'));
-    if(x.o2_edge!=null&&x.o2_edge>0&&_inR(x.o2_odds)&&x.tbLean!=null)_cand.push(_card(x,'Total Bases'));
+    if(x.o1_edge!=null&&x.o1_edge>=MINEDGE&&_inR(x.o1_odds)&&x.o1_book===FD)_cand.push(_card(x,'Hits / TB'));
+    if(x.o2_edge!=null&&x.o2_edge>=MINEDGE&&_inR(x.o2_odds)&&x.tbLean!=null&&x.o2_book===FD)_cand.push(_card(x,'Total Bases'));
   });
-  hr.forEach(function(x){ if(x.edge!=null&&x.edge>0&&_inR(x.odds))_cand.push(_card(x,'Home Run')); });
+  hr.forEach(function(x){ if(x.edge!=null&&x.edge>=MINEDGE&&_inR(x.odds)&&x.hr_book===FD)_cand.push(_card(x,'Home Run')); });
   k.forEach(function(x){ if(x.outsLean==null||x.outsLean<DURA)return;
-    if(x.edge!=null&&x.edge>0&&_inR(x.odds))_cand.push(_card(x,'Pitcher K'));
-    if(x.outs_edge!=null&&x.outs_edge>0&&_inR(x.outs_odds))_cand.push(_card(x,'Pitcher Outs'));
+    if(x.edge!=null&&x.edge>=MINEDGE&&_inR(x.odds)&&x.k_book===FD)_cand.push(_card(x,'Pitcher K'));
+    if(x.outs_edge!=null&&x.outs_edge>=MINEDGE&&_inR(x.outs_odds)&&x.outs_book===FD)_cand.push(_card(x,'Pitcher Outs'));
   });
   _cand.sort(function(a,b){return (b.edge==null?-1e9:b.edge)-(a.edge==null?-1e9:a.edge);});
   var _cap=3,_seen={},top=[];

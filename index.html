@@ -134,7 +134,7 @@ var gb=document.createElement('div'); gb.id='fvGambling'; if(!STANDALONE) gb.sty
 gb.innerHTML=
 '<h1 style="font-size:20px;margin:0 0 2px">Daily Baseball Gambling Model &mdash; <span id="gdt"></span></h1>'+
 '<p class="sub">Model-driven prop leans built from the same Statcast + matchup engine as the value model. Each spot is ranked 0&ndash;100 by the metrics that drive that prop. POC v1.</p>'+
-'<div class="gnote"><b>How to read this:</b> these are <b>model leans</b>, not odds-derived edges. The engine ranks each spot 0&ndash;100 by the inputs that move that prop (contact quality, matchup vs today&#39;s starter, park, recent form). The <b>Line / Odds / Edge</b> columns show prop lines via <b>SportsGameOdds</b> (FanDuel when available, otherwise market consensus) once an odds key is configured; <b>Edge</b> = model probability &minus; the de-vigged implied probability (positive = model sees value; strikeout edge uses a Poisson model around the posted line). Free-tier lines may be ~10 min delayed. The Hits/TB tab lists odds for <b>1+ hits</b> and <b>2+ total bases</b> &mdash; two different bets &mdash; with an edge beside each (model probabilities are rough estimates: 1+ hits uses the model&#39;s hit probability; 2+ total bases scales it by the batter&#39;s power (SLG)). The <b>Pitcher Props</b> tab covers three starter bets: strikeouts (Over, Poisson around the line), <b>outs recorded</b> (Over, from the model&#39;s projected innings) and <b>earned runs</b> (Under, from expected ERA over projected innings) &mdash; each with its own odds and edge. <b>Ineligible players</b> (IL, bereavement, paternity, or DTD) are excluded from all leans and Top Plays. <b>Limited-role bats</b> (low season plate appearances) are also held out so part-timers don&#39;t surface as plays. Model %/projections are rough estimates, not guarantees. <b>Top Plays</b> lists FanDuel-posted markets with a model edge of 5%+, plus home-run plays (kept by user preference and ranked by model value, even when the model rates them long); the <b>Results</b> tab tracks the full model including consensus-priced markets, for a complete performance picture. For entertainment; please bet responsibly.</div>'+
+'<div class="gnote"><b>How to read this:</b> these are <b>model leans</b>, not odds-derived edges. The engine ranks each spot 0&ndash;100 by the inputs that move that prop (contact quality, matchup vs today&#39;s starter, park, recent form). The <b>Line / Odds / Edge</b> columns show prop lines via <b>SportsGameOdds</b> (FanDuel when available, otherwise market consensus) once an odds key is configured; <b>Edge</b> = model probability &minus; the de-vigged implied probability (positive = model sees value; strikeout edge uses a Poisson model around the posted line). Free-tier lines may be ~10 min delayed. The Hits/TB tab lists odds for <b>1+ hits</b> and <b>2+ total bases</b> &mdash; two different bets &mdash; with an edge beside each (model probabilities are rough estimates: 1+ hits uses the model&#39;s hit probability; 2+ total bases scales it by the batter&#39;s power (SLG)). The <b>Pitcher Props</b> tab covers three starter bets: strikeouts (Over, Poisson around the line), <b>outs recorded</b> (Over, from the model&#39;s projected innings) and <b>earned runs</b> (Under, from expected ERA over projected innings) &mdash; each with its own odds and edge. <b>Ineligible players</b> (IL, bereavement, paternity, or DTD) are excluded from all leans and Top Plays. <b>Limited-role bats</b> (low season plate appearances) are also held out so part-timers don&#39;t surface as plays. Model %/projections are rough estimates, not guarantees. <b>Top Plays</b> are the model&#39;s sweet-spot bets: a strong model lean (&ge;55) AND a positive edge, ranked by a blend of the two and capped at 3 per market. All FanDuel-offered markets qualify (earned-run props are excluded since FanDuel doesn&#39;t post them). Odds tagged <b>FD</b> are FanDuel; <b>cons</b> are market consensus (verify the FanDuel number before betting). For entertainment; please bet responsibly.</div>'+
 '<div class="tabs" id="gtabs">'+
 '<div class="tab active" data-g="top" id="gtTop">Top Plays</div>'+
 '<div class="tab" data-g="hits" id="gtHits">Hits / TB Props</div>'+
@@ -224,30 +224,27 @@ function computeAll(){
   // ---- Top plays (cross-market) ----
   var _inR=function(o){return o!=null&&o>=-250&&o<=1000;};
   function _card(x,mk){
-    if(mk==='Hits / TB')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'xwOBA '+f3(x.xw)+' &middot; vs '+(x.sp||'TBD'),est:'~'+Math.round((x.p1||0)*100)+'% 1+ base',edge:x.o1_edge,side:'1+ H',odds:x.o1_odds};
-    if(mk==='Total Bases')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.tbLean,det:'SLG '+f3(x.slg)+' &middot; Brl/PA '+f1(x.bpa)+'%',est:'~'+Math.round((x.p2||0)*100)+'% 2+ TB',edge:x.o2_edge,side:'2+ TB',odds:x.o2_odds};
-    if(mk==='Home Run')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'Brl/PA '+f1(x.bpa)+'% &middot; '+f0(x.pf)+' PF',est:'~'+Math.round(x.est*100)+'% HR',edge:x.edge,side:'1+ HR',odds:x.odds};
-    if(mk==='Pitcher Outs')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.outsLean,det:'~'+f1(x.projIP)+' IP proj &middot; PQ '+f0(x.pq),est:'~'+Math.round((x.outs_p||0)*100)+'% over',edge:x.outs_edge,side:'Over '+x.outs_line+' Outs',odds:x.outs_odds};
+    if(mk==='Hits / TB')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'xwOBA '+f3(x.xw)+' &middot; vs '+(x.sp||'TBD'),est:'~'+Math.round((x.p1||0)*100)+'% 1+ base',edge:x.o1_edge,side:'1+ H',odds:x.o1_odds,book:x.o1_book};
+    if(mk==='Total Bases')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.tbLean,det:'SLG '+f3(x.slg)+' &middot; Brl/PA '+f1(x.bpa)+'%',est:'~'+Math.round((x.p2||0)*100)+'% 2+ TB',edge:x.o2_edge,side:'2+ TB',odds:x.o2_odds,book:x.o2_book};
+    if(mk==='Home Run')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'Brl/PA '+f1(x.bpa)+'% &middot; '+f0(x.pf)+' PF',est:'~'+Math.round(x.est*100)+'% HR',edge:x.edge,side:'1+ HR',odds:x.odds,book:x.hr_book};
+    if(mk==='Pitcher Outs')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.outsLean,det:'~'+f1(x.projIP)+' IP proj &middot; PQ '+f0(x.pq),est:'~'+Math.round((x.outs_p||0)*100)+'% over',edge:x.outs_edge,side:'Over '+x.outs_line+' Outs',odds:x.outs_odds,book:x.outs_book};
     if(mk==='Pitcher ER')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.erLean,det:'xERA '+f2(x.xera)+' &middot; ~'+f1(x.projIP)+' IP proj',est:'~'+Math.round((x.er_p||0)*100)+'% under',edge:x.er_edge,side:'Under '+x.er_line+' ER',odds:x.er_odds};
-    return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'K% '+f1(x.kp)+' &middot; Rec30 '+f0(x.rec),est:'proj '+f1(x.projK)+' K',edge:x.edge,side:'Over '+x.line+' K',odds:x.odds};
+    return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'K% '+f1(x.kp)+' &middot; Rec30 '+f0(x.rec),est:'proj '+f1(x.projK)+' K',edge:x.edge,side:'Over '+x.line+' K',odds:x.odds,book:x.k_book};
   }
   // Rank by betting EDGE (value). Guardrail: pitcher props require durability (outsLean>=DURA)
   // so relievers/openers/short-leash starters (generic-workload projection inflates their edge) are excluded.
   // TAB = the user's bettable set: FanDuel-listed prices only, edge >= MINEDGE (safety margin vs model error).
   // (The Results log uses its own selection incl. consensus odds for the shareable backtest.)
-  var DURA=50, MINEDGE=5, FD='fanduel';
+  // SWEET SPOT: require BOTH a good model lean (>=LEANMIN) AND a positive edge, then rank by a blend of the two
+  // (so conviction isn't sacrificed for marginal-edge longshots). Pitchers also need durability. Cap 3/market.
+  // All FanDuel-offered markets qualify (ER excluded); odds are best-available (FanDuel for K/Outs, else consensus).
+  var DURA=50, LEANMIN=55, W=0.12;
   var _cand=[];
-  hits.forEach(function(x){
-    if(x.o1_edge!=null&&x.o1_edge>=MINEDGE&&_inR(x.o1_odds)&&x.o1_book===FD)_cand.push(_card(x,'Hits / TB'));
-    if(x.o2_edge!=null&&x.o2_edge>=MINEDGE&&_inR(x.o2_odds)&&x.tbLean!=null&&x.o2_book===FD)_cand.push(_card(x,'Total Bases'));
-  });
-  // HR: user opts to keep these despite the model rating them -EV. Waive the FanDuel-price req and the edge floor; rank by edge with the rest (they'll sort low and fill the back slots).
-  hr.forEach(function(x){ if(x.edge!=null&&_inR(x.odds))_cand.push(_card(x,'Home Run')); });
-  k.forEach(function(x){ if(x.outsLean==null||x.outsLean<DURA)return;
-    if(x.edge!=null&&x.edge>=MINEDGE&&_inR(x.odds)&&x.k_book===FD)_cand.push(_card(x,'Pitcher K'));
-    if(x.outs_edge!=null&&x.outs_edge>=MINEDGE&&_inR(x.outs_odds)&&x.outs_book===FD)_cand.push(_card(x,'Pitcher Outs'));
-  });
-  _cand.sort(function(a,b){return (b.edge==null?-1e9:b.edge)-(a.edge==null?-1e9:a.edge);});
+  function _push(x,mk,ln,ed,od){ if(ed==null||ed<=0||ln==null||ln<LEANMIN||!_inR(od))return; var c=_card(x,mk); c.score=ed+W*(ln-50); _cand.push(c); }
+  hits.forEach(function(x){ _push(x,'Hits / TB',x.lean,x.o1_edge,x.o1_odds); if(x.tbLean!=null)_push(x,'Total Bases',x.tbLean,x.o2_edge,x.o2_odds); });
+  hr.forEach(function(x){ _push(x,'Home Run',x.lean,x.edge,x.odds); });
+  k.forEach(function(x){ if(x.outsLean!=null&&x.outsLean>=DURA){ _push(x,'Pitcher K',x.lean,x.edge,x.odds); _push(x,'Pitcher Outs',x.outsLean,x.outs_edge,x.outs_odds); } });
+  _cand.sort(function(a,b){return (b.score==null?-1e9:b.score)-(a.score==null?-1e9:a.score);});
   var _cap=3,_seen={},top=[];
   for(var _c=0;_c<_cand.length&&top.length<9;_c++){var _mk=_cand[_c].mk;_seen[_mk]=_seen[_mk]||0;if(_seen[_mk]>=_cap)continue;_seen[_mk]++;top.push(_cand[_c]);}
   var nIneH=H.filter(inel).length; var nIneP=PL.filter(function(p){return num(p.k)!=null&&inel(p);}).length;
@@ -314,7 +311,7 @@ function renderTop(){
   w.innerHTML=items.map(function(x){
     return '<div class="gcard"><div class="mk">'+x.mk+'</div><div class="pl">'+x.nm+' <span class="tm">'+x.tm+'</span></div>'+
       '<div class="dt2">'+x.opp+' &middot; '+x.det+'</div>'+
-      '<div class="ln" style="margin:3px 0 0">'+(x.side||'')+' <b style="color:#0a3d25">'+(x.odds!=null?fmtOdds(x.odds):'&mdash;')+'</b></div>'+
+      '<div class="ln" style="margin:3px 0 0">'+(x.side||'')+' <b style="color:#0a3d25">'+(x.odds!=null?fmtOdds(x.odds):'&mdash;')+'</b> <span style="font-size:10px;color:#5b6470">'+(x.book==='fanduel'?'FD':'cons')+'</span></div>'+
       '<div class="ln">Lean '+leanBadge(x.lean)+' &nbsp; <b>'+x.est+'</b>'+(x.edge!=null?(' &nbsp; <b style="color:'+(x.edge>=0?'#0d7d4d':'#b3402f')+'">Edge '+(x.edge>0?'+':'')+x.edge.toFixed(1)+'%</b>'):'')+'</div></div>';
   }).join('') || '<div class="muted">No plays for this date.</div>';
 }

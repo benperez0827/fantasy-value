@@ -168,13 +168,14 @@ function computeAll(){
   var pPF=mkPct(H.map(function(h){return num(h.pf);}));
   var pL7=mkPct(H.map(function(h){return num(h.spl7);}));
   var pPlat=mkPct(H.map(function(h){return num(h.spplat);}));
+  var pHA=mkPct(H.map(function(h){return num(h.spha);}));
   function oppWeak(h){var sp=PM[h.opp_sp];return (sp&&sp.pq!=null)?(100-sp.pq):null;}
   var pOpp=mkPct(H.map(oppWeak));
   var hits=[];
   H.forEach(function(h){ if(inel(h))return; if(!reg(h))return; if(!lineupOK(h))return; if(num(h.xwoba)==null)return;
-    var lean=blend([[pXW(num(h.xwoba)),.42],[pOpp(oppWeak(h)),.26],[pPF(num(h.pf)),.12],[pL7(num(h.spl7)),.12],[pPlat(num(h.spplat)),.08]]);
+    var lean=blend([[pXW(num(h.xwoba)),.34],[pOpp(oppWeak(h)),.22],[pPlat(num(h.spplat)),.16],[pHA(num(h.spha)),.14],[pPF(num(h.pf)),.08],[pL7(num(h.spl7)),.06]]);
     if(lean==null)return;
-    hits.push({nm:h.name,key:normName(h.name),tm:h.team,opp:(h.home?'vs ':'@ ')+h.opp,sp:h.opp_sp||'',lean:lean*100,est:0.50+0.30*lean,xw:num(h.xwoba),slg:num(h.slg),l7:num(h.spl7),pf:num(h.pf),bpa:num(h.brlpa),mev:num(h.mev),ow:oppWeak(h),fa:h.avail?1:0});
+    hits.push({nm:h.name,key:normName(h.name),tm:h.team,opp:(h.home?'vs ':'@ ')+h.opp,sp:h.opp_sp||'',lean:lean*100,est:0.50+0.30*lean,xw:num(h.xwoba),slg:num(h.slg),l7:num(h.spl7),pf:num(h.pf),bpa:num(h.brlpa),mev:num(h.mev),ow:oppWeak(h),spplat:num(h.spplat),spha:num(h.spha),fa:h.avail?1:0});
   });
   hits.sort(function(a,b){return b.lean-a.lean;});
   // ---- Home runs ----
@@ -185,7 +186,7 @@ function computeAll(){
   var pOppB=mkPct(H.map(oppBarrel));
   var hr=[];
   H.forEach(function(h){ if(inel(h))return; if(!reg(h))return; if(!lineupOK(h))return; if(num(h.brlpa)==null&&num(h.brl)==null)return;
-    var lean=blend([[pBpa(num(h.brlpa)),.34],[pBrl(num(h.brl)),.18],[pMev(num(h.mev)),.12],[pPF(num(h.pf)),.14],[pOppB(oppBarrel(h)),.22]]);
+    var lean=blend([[pBpa(num(h.brlpa)),.26],[pOppB(oppBarrel(h)),.16],[pPlat(num(h.spplat)),.16],[pHA(num(h.spha)),.14],[pBrl(num(h.brl)),.12],[pMev(num(h.mev)),.08],[pPF(num(h.pf)),.08]]);
     if(lean==null)return;
     hr.push({nm:h.name,key:normName(h.name),tm:h.team,opp:(h.home?'vs ':'@ ')+h.opp,sp:h.opp_sp||'',lean:lean*100,est:0.04+0.18*lean,brl:num(h.brl),bpa:num(h.brlpa),mev:num(h.mev),pf:num(h.pf),fa:h.avail?1:0});
   });
@@ -220,7 +221,7 @@ function computeAll(){
   hits.forEach(function(r){ r.p1=r.est; if(r.p1!=null){var pc=Math.max(0.05,Math.min(0.97,r.p1)); var lam=-Math.log(1-pc)*Math.sqrt((r.slg!=null?r.slg:0.40)/0.40); r.p2=1-(1+lam)*Math.exp(-lam);} attachTB(r,OD&&OD.tb,r.p1,r.p2); });
   hr.forEach(function(r){attachBin(r,OD&&OD.hr,r.est);});
   k.forEach(function(r){attachK(r,OD&&OD.k);attachOuts(r,OD&&OD.outs);attachER(r,OD&&OD.er);});
-  hits.forEach(function(r){var ln=blend([[pSLG(r.slg),.30],[pBpa(r.bpa),.22],[pXW(r.xw),.18],[pMev(r.mev),.10],[pOpp(r.ow),.12],[pPF(r.pf),.08]]); r.tbLean=(ln==null?null:ln*100);});
+  hits.forEach(function(r){var ln=blend([[pSLG(r.slg),.24],[pBpa(r.bpa),.16],[pPlat(r.spplat),.16],[pHA(r.spha),.14],[pXW(r.xw),.12],[pOpp(r.ow),.10],[pMev(r.mev),.04],[pPF(r.pf),.04]]); r.tbLean=(ln==null?null:ln*100);});
   // ---- Top plays (cross-market) ----
   var _inR=function(o){return o!=null&&o>=-250&&o<=1000;};
   function _card(x,mk){

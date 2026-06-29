@@ -231,21 +231,22 @@ function computeAll(){
     if(mk==='Pitcher ER')return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.erLean,det:'xERA '+f2(x.xera)+' &middot; ~'+f1(x.projIP)+' IP proj',est:'~'+Math.round((x.er_p||0)*100)+'% under',edge:x.er_edge,side:'Under '+x.er_line+' ER',odds:x.er_odds};
     return {mk:mk,nm:x.nm,tm:x.tm,opp:x.opp,lean:x.lean,det:'K% '+f1(x.kp)+' &middot; Rec30 '+f0(x.rec),est:'proj '+f1(x.projK)+' K',edge:x.edge,side:'Over '+x.line+' K',odds:x.odds};
   }
-  var _lists=[
-    hits.filter(function(_h){return _inR(_h.o1_odds);}).slice(0,12).map(function(x){return _card(x,'Hits / TB');}),
-    hits.filter(function(_h){return _h.o2_odds!=null&&_inR(_h.o2_odds)&&_h.tbLean!=null;}).sort(function(a,b){return b.tbLean-a.tbLean;}).slice(0,12).map(function(x){return _card(x,'Total Bases');}),
-    hr.filter(function(_h){return _inR(_h.odds);}).slice(0,12).map(function(x){return _card(x,'Home Run');}),
-    k.filter(function(_p){return _inR(_p.odds);}).slice(0,12).map(function(x){return _card(x,'Pitcher K');}),
-    k.filter(function(_p){return _p.outs_odds!=null&&_inR(_p.outs_odds)&&_p.outsLean!=null;}).sort(function(a,b){return b.outsLean-a.outsLean;}).slice(0,12).map(function(x){return _card(x,'Pitcher Outs');})
-  ];
-  var top=[], _i=0;
-  while(top.length<9){
-    var _round=[]; _lists.forEach(function(L){if(L[_i])_round.push(L[_i]);});
-    if(!_round.length)break;
-    _round.sort(function(a,b){return b.lean-a.lean;});
-    for(var _j=0;_j<_round.length&&top.length<9;_j++)top.push(_round[_j]);
-    _i++;
-  }
+  // Rank by betting EDGE (value). Guardrail: pitcher props require durability (outsLean>=DURA)
+  // so relievers/openers/short-leash starters (generic-workload projection inflates their edge) are excluded.
+  var DURA=50;
+  var _cand=[];
+  hits.forEach(function(x){
+    if(x.o1_edge!=null&&x.o1_edge>0&&_inR(x.o1_odds))_cand.push(_card(x,'Hits / TB'));
+    if(x.o2_edge!=null&&x.o2_edge>0&&_inR(x.o2_odds)&&x.tbLean!=null)_cand.push(_card(x,'Total Bases'));
+  });
+  hr.forEach(function(x){ if(x.edge!=null&&x.edge>0&&_inR(x.odds))_cand.push(_card(x,'Home Run')); });
+  k.forEach(function(x){ if(x.outsLean==null||x.outsLean<DURA)return;
+    if(x.edge!=null&&x.edge>0&&_inR(x.odds))_cand.push(_card(x,'Pitcher K'));
+    if(x.outs_edge!=null&&x.outs_edge>0&&_inR(x.outs_odds))_cand.push(_card(x,'Pitcher Outs'));
+  });
+  _cand.sort(function(a,b){return (b.edge==null?-1e9:b.edge)-(a.edge==null?-1e9:a.edge);});
+  var _cap=3,_seen={},top=[];
+  for(var _c=0;_c<_cand.length&&top.length<9;_c++){var _mk=_cand[_c].mk;_seen[_mk]=_seen[_mk]||0;if(_seen[_mk]>=_cap)continue;_seen[_mk]++;top.push(_cand[_c]);}
   var nIneH=H.filter(inel).length; var nIneP=PL.filter(function(p){return num(p.k)!=null&&inel(p);}).length;
   var nLowH=H.filter(function(h){return !inel(h)&&!reg(h);}).length;
   return {hits:hits,hr:hr,k:k,top:top,nIneH:nIneH,nIneP:nIneP,nLowH:nLowH,thr:THR};
